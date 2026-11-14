@@ -1,0 +1,58 @@
+{
+  "_note": "Curated data for sertraline (Zoloft). reviews: Drugs.com public review statistics, Nov 2026. reddit: real r/zoloft threads (used when Reddit API keys are not set). survey: SAMPLE numbers for the demo, not real Flashpoint results.",
+  "reviews": {
+    "source": "Drugs.com",
+    "url": "https://www.drugs.com/comments/sertraline/zoloft.html",
+    "rating": 7.3,
+    "count": 2014,
+    "positivePct": 64,
+    "negativePct": 18,
+    "mentions": {
+      "anxiety": 14.7,
+      "nausea": 11.4,
+      "insomnia": 9.6,
+      "sexual": 8.0,
+      "fatigue": 7.1,
+      "appetite": 6.5,
+      "headache": 6.3,
+      "weight": 5.6,
+      "diarrhea": 5.2
+    },
+    "sfx": {
+      "anxiety": "https://www.drugs.com/comments/sertraline/zoloft-sfx-anxiety.html",
+      "nausea": "https://www.drugs.com/comments/sertraline/zoloft-sfx-nausea.html",
+      "insomnia": "https://www.drugs.com/comments/sertraline/zoloft-sfx-insomnia.html",
+      "sexual": "https://www.drugs.com/comments/sertraline/zoloft-sfx-sexual-dysfunction.html",
+      "fatigue": "https://www.drugs.com/comments/sertraline/zoloft-sfx-tiredness.html",
+      "appetite": "https://www.drugs.com/comments/sertraline/zoloft-sfx-loss-of-appetite.html",
+      "headache": "https://www.drugs.com/comments/sertraline/zoloft-sfx-headaches.html",
+      "weight": "https://www.drugs.com/comments/sertraline/zoloft-sfx-weight-gain.html",
+      "diarrhea": "https://www.drugs.com/comments/sertraline/zoloft-sfx-diarrhea.html"
+    }
+  },
+  "reddit": {
+    "n": 5,
+    "mentions": {},
+    "posts": [
+      { "title": "Moral compass out of whack while on Zoloft", "url": "https://www.reddit.com/r/zoloft/comments/1hzyb6h/moral_compass_out_of_whack_while_on_zoloft/", "subreddit": "r/zoloft", "created": "2025-01-12", "theme": "Feeling flat", "summary": "Replies describe feeling numb and caring less." },
+      { "title": "Side effects after two weeks?", "url": "https://www.reddit.com/r/zoloft/comments/1ilm0tv/side_effects_after_two_weeks/", "subreddit": "r/zoloft", "created": "2025-02-01", "theme": "Early weeks", "summary": "New starters compare shakiness and jitters in the first days." },
+      { "title": "FAQs etc! (mod post)", "url": "https://www.reddit.com/r/zoloft/comments/p21bem/faqs_etc/", "subreddit": "r/zoloft", "created": "2021-08-10", "theme": "Night sweats", "summary": "People realize night sweats are common once they find the sub." },
+      { "title": "This sub isn’t an entirely accurate picture of Zoloft", "url": "https://www.reddit.com/r/zoloft/comments/zosxxr/this_sub_isnt_an_entirely_accurate_picture_of/", "subreddit": "r/zoloft", "created": "2022-12-18", "theme": "It got better", "summary": "People who feel better stop posting, so the sub skews negative." },
+      { "title": "Hang in there. It works.", "url": "https://www.reddit.com/r/zoloft/comments/1fycsk4/hang_in_there_it_works/", "subreddit": "r/zoloft", "created": "2024-10-07", "theme": "It got better", "summary": "Rough first weeks, then lasting relief." }
+    ]
+  },
+  "survey": {
+    "sample": true,
+    "headline": [
+      { "value": "58%", "label": "had a side effect nobody mentioned to them" },
+      { "value": "66%", "label": "said early side effects eased within a month" }
+    ],
+    "toldVsExperienced": [
+      { "name": "Nausea", "told": 61, "experienced": 47 },
+      { "name": "Trouble sleeping", "told": 38, "experienced": 36 },
+      { "name": "Anxiety at first", "told": 17, "experienced": 41 },
+      { "name": "Sexual side effects", "told": 22, "experienced": 34 },
+      { "name": "Feeling flat", "told": 5, "experienced": 24 }
+    ]
+  }
+}

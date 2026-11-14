@@ -1,0 +1,13 @@
+{
+  "name": "medcheck",
+  "version": "1.0.0",
+  "description": "What the label says vs. what patients share. Side-effect research agent.",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

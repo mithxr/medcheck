@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MedCheck — What the label says. What patients share.</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0d12;--surface:#14161d;--surface2:#1b1e27;--line:#262a36;
+  --ink:#f3efe8;--ink2:#b9b4ab;--ink3:#7d7a74;
+  --off:#6a82e0;--ppl:#e85c33;--flash:#d9ff5c;--ok:#3ecf8e;
+  --serif:"Instrument Serif",Georgia,serif;--sans:Inter,system-ui,sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0;gap:24px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.02em;font-size:19px;cursor:pointer;flex-shrink:0}
+.logo-mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(90deg,var(--off) 50%,var(--ppl) 50%);display:grid;place-items:center}
+.logo-mark i{width:10px;height:10px;border-radius:50%;background:var(--bg)}
+.fp-pill{border:1px solid rgba(217,255,92,.35);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--ink2);display:inline-flex;gap:8px;align-items:center;flex-shrink:0}
+.fp-pill i{width:6px;height:6px;border-radius:50%;background:var(--flash);box-shadow:0 0 10px var(--flash)}
+
+.view{display:none}.view.on{display:block;animation:fade .45s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+
+.hero{min-height:calc(100vh - 80px);display:flex;flex-direction:column;justify-content:center;padding:30px 0 80px;position:relative}
+.hero::before{content:"";position:absolute;right:-240px;top:-80px;width:700px;height:700px;background:radial-gradient(circle,rgba(232,92,51,.15),transparent 62%);pointer-events:none}
+.hero::after{content:"";position:absolute;left:-280px;top:160px;width:640px;height:640px;background:radial-gradient(circle,rgba(106,130,224,.14),transparent 62%);pointer-events:none}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(56px,8.6vw,118px);line-height:.95;letter-spacing:-.025em;position:relative;z-index:1;margin-bottom:22px}
+h1>span{display:block}
+h1 .o{color:var(--off);font-style:italic}h1 .p{color:var(--ppl);font-style:italic}
+.lede{font-size:18px;color:var(--ink2);margin-bottom:34px;position:relative;z-index:1}
+.search{position:relative;z-index:2;max-width:720px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:10px;display:flex;gap:8px;align-items:center;box-shadow:0 30px 80px -20px rgba(0,0,0,.6)}
+.search:focus-within{border-color:#3a3f50}
+.search input[type=text]{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);font:500 22px var(--sans);padding:12px}
+.search input::placeholder{color:var(--ink3)}
+.cam{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;color:var(--ink2);border:1px solid var(--line);flex-shrink:0;transition:.15s}
+.cam:hover{color:var(--ink);border-color:var(--ink3)}
+.cam svg{width:21px;height:21px}
+.go{background:var(--ink);color:var(--bg);border-radius:13px;height:48px;padding:0 24px;font-weight:600;font-size:16px;flex-shrink:0}
+.search.mini{flex:1;max-width:520px;padding:6px;box-shadow:none;border-radius:14px}
+.search.mini input[type=text]{font-size:15px;padding:8px}
+.search.mini .cam,.search.mini .go{height:38px}.search.mini .cam{width:38px;border-radius:10px}.search.mini .go{border-radius:10px;font-size:14px;padding:0 16px}
+.thumb{display:none;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:4px 10px 4px 4px;font-size:13px;color:var(--ink2)}
+.thumb.on{display:flex}.thumb img{width:38px;height:38px;border-radius:7px;object-fit:cover}
+.thumb b{color:var(--ink);font-weight:600}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--ink3);border-top-color:transparent;border-radius:50%;animation:spin .8s linear infinite}
+.chips{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;position:relative;z-index:2;align-items:center}
+.chips small{color:var(--ink3);font-size:13px;margin-right:4px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--ink2)}
+.chip:hover{border-color:var(--ink3);color:var(--ink)}
+.chip.hot{border-color:rgba(232,92,51,.5);color:var(--ink);background:rgba(232,92,51,.08)}
+.toast{position:fixed;bottom:28px;left:50%;transform:translate(-50%,30px);background:var(--surface2);border:1px solid var(--line);padding:12px 18px;border-radius:12px;font-size:14px;opacity:0;transition:.3s;z-index:90;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+.overlay{position:fixed;inset:0;background:rgba(8,9,12,.88);backdrop-filter:blur(14px);z-index:50;display:none;align-items:center;justify-content:center;padding:24px}
+.overlay.on{display:flex}
+.agent{width:min(860px,100%);background:var(--surface);border:1px solid var(--line);border-radius:24px;overflow:hidden;display:grid;grid-template-columns:1.15fr .85fr}
+.agent-l{padding:28px}
+.agent-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.agent-h h3{font-family:var(--serif);font-weight:400;font-size:30px}
+.agent-h h3 em{color:var(--ppl)}
+.skip{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:8px;padding:5px 10px}
+.steps{list-style:none;display:flex;flex-direction:column;gap:3px}
+.step{display:grid;grid-template-columns:24px 1fr auto;gap:12px;align-items:center;padding:9px 12px;border-radius:12px;opacity:.3;transition:.3s}
+.step.active{opacity:1;background:var(--surface2)}.step.done{opacity:.85}
+.step .ic{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center}
+.step.active .ic{border-color:var(--ink2);border-top-color:transparent;animation:spin .8s linear infinite}
+.step.done .ic{border-color:var(--ok);background:var(--ok)}
+.step.done .ic::after{content:"";width:7px;height:4px;border-left:2px solid var(--bg);border-bottom:2px solid var(--bg);transform:rotate(-45deg) translate(1px,-1px)}
+.step .t{font-size:14px;font-weight:500}.step .s{font-size:12px;color:var(--ink3)}
+.step .n{font:500 12px var(--mono);color:var(--ink2)}
+.step.side-o .t::before,.step.side-p .t::before{content:"";display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:8px;vertical-align:1px}
+.step.side-o .t::before{background:var(--off)}.step.side-p .t::before{background:var(--ppl)}
+.step.fp.active{background:linear-gradient(90deg,rgba(217,255,92,.13),rgba(217,255,92,.02));box-shadow:inset 0 0 0 1px rgba(217,255,92,.4)}
+.step.fp.active .ic{border-color:var(--flash);border-top-color:transparent}
+.step.fp .t{color:var(--flash)}
+.step.fp .t::before{content:"⚡";margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.agent-r{background:#0e1015;border-left:1px solid var(--line);padding:22px;font:400 11.5px/1.75 var(--mono);color:var(--ink3);overflow:hidden}
+.agent-r .lh{color:var(--ink2);margin-bottom:10px;letter-spacing:.08em;text-transform:uppercase;font-size:10.5px}
+.log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:fade .25s}
+.log .c{color:var(--off)}.log .f{color:var(--flash)}.log .o{color:var(--ok)}.log .p{color:var(--ppl)}
+.prog{height:3px;background:var(--line);grid-column:1/-1}.prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--off),var(--ppl));transition:width .4s}
+
+.rhead{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding:24px 0 22px;flex-wrap:wrap}
+.rhead .meta{font:500 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px}
+.rhead h2{font-family:var(--serif);font-weight:400;font-size:clamp(44px,5.4vw,68px);line-height:.95;letter-spacing:-.02em}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px}
+.tab{padding:9px 16px;border-radius:10px;font-size:14px;color:var(--ink2);font-weight:500;white-space:nowrap}
+.tab.on{background:var(--ink);color:var(--bg)}
+.tab.fp-t.on{background:var(--flash);color:var(--bg)}
+.tab.fp-t:not(.on){color:var(--flash)}
+.page{display:none}.page.on{display:block;animation:fade .4s}
+
+.hope{display:flex;align-items:center;gap:12px;background:rgba(62,207,142,.08);border:1px solid rgba(62,207,142,.28);border-radius:14px;padding:12px 16px;font-size:14px;color:var(--ink2);margin-bottom:16px}
+.hope b{font-family:var(--serif);font-weight:400;font-size:28px;color:var(--ok);line-height:1}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:26px}
+.card h5{font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.1;margin-bottom:16px}
+.note{font-size:12px;color:var(--ink3);margin-top:16px;line-height:1.55}
+
+.split{display:grid;grid-template-columns:1fr 170px 1fr;align-items:end;margin-bottom:12px}
+.split h3{font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.05}
+.split .o{color:var(--off)}.split .p{color:var(--ppl);text-align:right}
+.split small{display:block;font:500 11px var(--mono);color:var(--ink3);letter-spacing:.04em;margin-top:4px}
+.frow{display:grid;grid-template-columns:1fr 170px 1fr;align-items:center;min-height:40px;border-radius:10px}
+.frow:hover{background:rgba(255,255,255,.03)}
+.frow .lab{text-align:center;font-size:14px;font-weight:500;padding:0 10px;line-height:1.2}
+.frow .lab small{display:block;font-size:11px;color:var(--ink3);font-weight:400}
+.frow .lab b{font:700 9px var(--mono);letter-spacing:.08em;background:var(--ppl);color:var(--bg);padding:2px 5px;border-radius:4px;margin-left:6px;vertical-align:2px}
+.side{display:flex;align-items:center;gap:8px;height:18px}
+.side.l{flex-direction:row-reverse}
+.side .bar{height:16px;width:0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.side.l .bar{background:var(--off);border-radius:4px 0 0 4px}
+.side.r .bar{background:var(--ppl);border-radius:0 4px 4px 0}
+.side .v{font:500 12px var(--mono);color:var(--ink2);white-space:nowrap}
+.side .ghost{font:italic 400 11.5px var(--sans);color:var(--ink3);margin-right:6px}
+.status{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.status span{font:500 10.5px var(--mono);letter-spacing:.04em;padding:3px 8px;border-radius:5px;border:1px solid var(--line);color:var(--ink3)}
+.status span.live{color:var(--ok);border-color:rgba(62,207,142,.4)}
+.status span.curated{color:#a3b3f0;border-color:rgba(106,130,224,.4)}
+.tip{position:fixed;pointer-events:none;background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--ink2);z-index:60;opacity:0;transition:opacity .12s;max-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.tip b{color:var(--ink);display:block;margin-bottom:3px;font-size:13px}
+
+.ins{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}
+.in{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:8px;transition:.15s}
+.in:hover{border-color:#3a3f50;transform:translateY(-2px)}
+.in .k{font:600 10px var(--mono);letter-spacing:.1em;color:var(--ppl);text-transform:uppercase}
+.in h6{font-family:var(--serif);font-weight:400;font-size:24px;line-height:1.12}
+.in p{font-size:13.5px;color:var(--ink2)}
+.in .lk{font-size:12px;color:var(--ink3);margin-top:auto}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px}
+.col-h{font-family:var(--serif);font-size:28px;padding:0 2px 2px}
+.src{display:block;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;transition:.15s}
+a.src:hover{transform:translateY(-2px);border-color:rgba(106,130,224,.55)}
+.src .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;gap:10px}
+.src .nm{font-size:15px;font-weight:600}
+.src .ar{font-size:13px;color:var(--ink3)}
+.src p{font-size:13.5px;color:var(--ink2)}
+.facts{display:flex;gap:18px;margin-top:12px;flex-wrap:wrap}
+.facts b{font-family:var(--serif);font-weight:400;font-size:30px;line-height:1;display:block}
+.facts small{font-size:11px;color:var(--ink3)}
+.tag{font:600 9.5px var(--mono);letter-spacing:.08em;padding:3px 7px;border-radius:5px;border:1px solid var(--line);color:var(--ink3)}
+.faers{display:flex;flex-direction:column;gap:5px;margin-top:12px}
+.faers div{display:grid;grid-template-columns:100px 1fr 46px;gap:10px;align-items:center;font-size:12px;color:var(--ink2)}
+.faers i{display:block;height:8px;border-radius:0 3px 3px 0;background:var(--off);opacity:.85}
+.faers span:last-child{font-family:var(--mono);font-size:11px;text-align:right;color:var(--ink3)}
+.sfx{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.sfx a{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:5px 10px;color:var(--ink2)}
+.sfx a:hover{border-color:var(--ppl);color:var(--ink)}
+.rd{display:block;border-radius:16px;padding:18px 20px;border:1px solid var(--line);background:var(--surface);transition:.15s}
+.rd:hover{border-color:rgba(232,92,51,.55);transform:translateY(-2px)}
+.rd .rh{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--ink3);margin-bottom:8px}
+.rd .rh i{width:22px;height:22px;border-radius:50%;background:#ff4500;color:#fff;display:grid;place-items:center;font:700 10px var(--sans);font-style:normal}
+.rd .th{margin-left:auto;font:600 9.5px var(--mono);letter-spacing:.08em;color:var(--ppl);border:1px solid rgba(232,92,51,.4);padding:2px 7px;border-radius:5px;text-transform:uppercase}
+.rd h6{font-size:15.5px;font-weight:600;line-height:1.3;margin-bottom:4px}
+.rd p{font-size:13px;color:var(--ink2)}
+.rd .open{font-size:12px;color:var(--ink3);margin-top:8px;display:block}
+.rd:hover .open{color:var(--ppl)}
+
+.fp-top{display:flex;justify-content:space-between;align-items:center;gap:16px;border-radius:20px;padding:22px 24px;background:linear-gradient(135deg,#1c2410 0%,var(--surface) 65%);border:1px solid rgba(217,255,92,.28);margin-bottom:18px;flex-wrap:wrap}
+.fp-top h3{font-family:var(--serif);font-weight:400;font-size:34px;line-height:1.05}
+.fp-top h3 em{color:var(--flash)}
+.fp-top p{font-size:14px;color:var(--ink2);margin-top:4px}
+.sample{font:600 10px var(--mono);letter-spacing:.1em;color:var(--bg);background:var(--flash);padding:5px 9px;border-radius:5px;white-space:nowrap}
+.flow{display:flex;gap:6px;margin:2px 0 16px;flex-wrap:wrap}
+.flow span{font:500 11px var(--mono);color:var(--flash);border:1px solid rgba(217,255,92,.3);padding:4px 9px;border-radius:6px}
+.plan div{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:11px 0;border-top:1px solid var(--line);font-size:14px}
+.plan div:first-child{border-top:0}
+.plan dt{color:var(--ink3)}.plan dd{color:var(--ink)}
+.big2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.big2 div{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.big2 b{font-family:var(--serif);font-weight:400;font-size:38px;line-height:1;display:block;color:var(--flash)}
+.big2 small{font-size:12.5px;color:var(--ink2)}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--ink2);margin-bottom:14px}
+.legend span{display:flex;align-items:center;gap:7px}.legend i{width:11px;height:11px;border-radius:3px}
+.tve{display:flex;flex-direction:column;gap:12px}
+.tr{display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:center}
+.tr .nm{font-size:14px;font-weight:500}
+.tr .b{display:flex;align-items:center;gap:8px;height:12px;margin:2px 0}
+.tr .b i{display:block;height:100%;width:0;border-radius:0 4px 4px 0;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.tr .told i{background:#5b6072}.tr .exp i{background:var(--flash)}
+.tr .b span{font:500 11px var(--mono);color:var(--ink2)}
+
+/* login */
+#v-login.on{display:flex;min-height:100vh;flex-direction:column}
+.login{flex:1;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;padding:20px 0 60px;position:relative}
+.login::before{content:"";position:absolute;right:-200px;top:-60px;width:620px;height:620px;background:radial-gradient(circle,rgba(232,92,51,.13),transparent 62%);pointer-events:none}
+.login::after{content:"";position:absolute;left:-260px;bottom:-80px;width:620px;height:620px;background:radial-gradient(circle,rgba(106,130,224,.13),transparent 62%);pointer-events:none}
+.login h1{font-size:clamp(48px,6.4vw,88px)}
+.login .lede{max-width:440px}
+.auth{position:relative;z-index:1;background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:0 30px 80px -20px rgba(0,0,0,.6)}
+.auth h3{font-family:var(--serif);font-weight:400;font-size:30px;margin-bottom:4px}
+.auth .sub{font-size:13.5px;color:var(--ink3);margin-bottom:18px}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.role{text-align:left;border:1px solid var(--line);border-radius:16px;padding:14px;transition:.15s;background:var(--surface2)}
+.role:hover{border-color:#3a3f50}
+.role .ri{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;margin-bottom:10px;font-size:17px}
+.role b{display:block;font-size:14.5px}
+.role small{font-size:12px;color:var(--ink3);line-height:1.4;display:block;margin-top:2px}
+.role.pt .ri{background:rgba(232,92,51,.15)}.role.co .ri{background:rgba(106,130,224,.16)}
+.role.pt.on{border-color:var(--ppl);box-shadow:inset 0 0 0 1px var(--ppl)}
+.role.co.on{border-color:var(--off);box-shadow:inset 0 0 0 1px var(--off)}
+.fld{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.fld label{font-size:12.5px;color:var(--ink2);font-weight:500}
+.fld input,.fld select,.fld textarea{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--ink);font:400 15px var(--sans);outline:0;width:100%}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:#4a5066}
+.fld textarea{resize:vertical;min-height:86px}
+.btn-main{width:100%;height:50px;border-radius:13px;font-weight:600;font-size:15.5px;margin-top:6px}
+.btn-main.pt{background:var(--ppl);color:#fff}.btn-main.co{background:var(--off);color:#fff}
+.alt{display:block;text-align:center;font-size:13px;color:var(--ink3);margin-top:12px;width:100%}
+.alt:hover{color:var(--ink)}
+.fine{font-size:11.5px;color:var(--ink3);margin-top:14px;line-height:1.5;text-align:center}
+.who{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink2)}
+.who .av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:12px;color:#fff}
+.who button{font-size:12px;color:var(--ink3);border:1px solid var(--line);border-radius:8px;padding:5px 9px}
+.who button:hover{color:var(--ink)}
+.share-btn{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:14px;color:var(--ink2);border:1px dashed #3a3f50;border-radius:12px;padding:10px 14px;position:relative;z-index:2;width:fit-content}
+.share-btn:hover{color:var(--ink);border-color:var(--ppl)}
+.share-btn b{color:var(--ppl)}
+
+/* review modal */
+.modal{position:fixed;inset:0;background:rgba(8,9,12,.8);backdrop-filter:blur(10px);z-index:70;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.modal .auth{width:min(520px,100%);max-height:92vh;overflow:auto}
+.x{float:right;font-size:20px;color:var(--ink3)}
+.sx{display:flex;flex-wrap:wrap;gap:6px}
+.sx button{font-size:13px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;color:var(--ink2)}
+.sx button.on{background:rgba(232,92,51,.14);border-color:var(--ppl);color:var(--ink)}
+.stars{display:flex;gap:4px}
+.stars button{font-size:24px;color:#3a3f50;line-height:1}
+.stars button.on{color:#f5b942}
+.two-f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mine{border:1px solid rgba(232,92,51,.45);background:linear-gradient(135deg,rgba(232,92,51,.08),var(--surface) 60%)}
+.mine .rh i{background:var(--ppl)}
+
+/* company dashboard */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.kpi small{font-size:12px;color:var(--ink3)}
+.kpi b{display:block;font-family:var(--serif);font-weight:400;font-size:38px;line-height:1.05;margin-top:4px}
+.kpi span{font-size:12px;color:var(--ink2)}
+.dash{display:grid;grid-template-columns:1.35fr .65fr;gap:16px;align-items:start}
+.sig-t{width:100%;border-collapse:collapse;font-size:14px}
+.sig-t th{text-align:left;font:500 11px var(--mono);letter-spacing:.06em;color:var(--ink3);text-transform:uppercase;padding:0 10px 10px;border-bottom:1px solid var(--line)}
+.sig-t td{padding:13px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.sig-t tr:last-child td{border-bottom:0}
+.sig-t td.num{font-family:var(--mono);font-size:13px}
+.sig-t .o{color:#93a6ee}.sig-t .p{color:#f08a6a}
+.lvl{font:700 10px var(--mono);letter-spacing:.06em;padding:3px 8px;border-radius:5px;white-space:nowrap}
+.lvl.hi{background:rgba(232,92,51,.16);color:#ff9a7a}.lvl.md{background:rgba(245,185,66,.14);color:#f5c96a}.lvl.lo{background:rgba(106,130,224,.14);color:#a3b3f0}
+.spark{width:80px;height:24px}
+.prods{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.prod{border:1px solid var(--line);border-radius:12px;padding:8px 14px;font-size:13.5px;color:var(--ink2);background:var(--surface)}
+.prod.on{border-color:var(--off);color:var(--ink);background:rgba(106,130,224,.1)}
+.prod.add{border-style:dashed;color:var(--ink3)}
+.compliance{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--ink2);background:rgba(106,130,224,.07);border:1px solid rgba(106,130,224,.25);border-radius:12px;padding:12px 14px;margin-top:16px}
+
+/* agreement votes */
+.agree{margin-top:16px}
+.ag-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.ag-h h5{margin:0}
+.ag-h p{font-size:13px;color:var(--ink3)}
+.ag-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px}
+.ag{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.ag .nm{font-size:14px;font-weight:500}
+.ag .nm small{display:block;font-size:11.5px;color:var(--ink3);font-weight:400;margin-top:1px}
+.vb{display:flex;gap:6px}
+.vb button{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:6px 11px;color:var(--ink2);display:flex;gap:6px;align-items:center;transition:.15s}
+.vb button:hover{border-color:var(--ink3);color:var(--ink)}
+.vb button.yes.on{background:rgba(232,92,51,.16);border-color:var(--ppl);color:var(--ink)}
+.vb button.no.on{background:rgba(106,130,224,.16);border-color:var(--off);color:var(--ink)}
+.meter{grid-column:1/-1;display:flex;align-items:center;gap:10px}
+.meter .track{flex:1;height:6px;border-radius:4px;background:var(--surface2);overflow:hidden;display:flex}
+.meter .track i{display:block;height:100%;background:var(--ppl);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.meter span{font:500 11.5px var(--mono);color:var(--ink3);white-space:nowrap;min-width:150px;text-align:right}
+.meter span b{color:var(--ink2);font-weight:500}
+.agv{font-family:var(--mono);font-size:13px;color:#f08a6a}
+@media (max-width:900px){.ag-grid{grid-template-columns:1fr}}
+
+@media (max-width:900px){.login{grid-template-columns:1fr;gap:30px}.kpis{grid-template-columns:1fr 1fr}.dash{grid-template-columns:1fr}}
+
+footer{border-top:1px solid var(--line);margin-top:56px;padding:24px 0 40px;color:var(--ink3);font-size:12.5px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .agent{grid-template-columns:1fr}.agent-r{display:none}
+  .two,.ins{grid-template-columns:1fr}
+  .frow,.split{grid-template-columns:1fr 110px 1fr}
+  .fp-pill{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section class="view on" id="v-login">
+  <div class="wrap" style="width:100%">
+    <nav><div class="logo"><div class="logo-mark"><i></i></div>MedCheck</div><span class="fp-pill"><i></i>Patient surveys via Flashpoint</span></nav>
+  </div>
+  <div class="wrap login" style="width:100%">
+    <div style="position:relative;z-index:1">
+      <h1><span>What the <span class="o">label says.</span></span><span>What <span class="p">patients share.</span></span></h1>
+      <p class="lede">One platform, two sides: patients see the real picture, and drug-safety teams hear the real patient voice.</p>
+    </div>
+    <div class="auth">
+      <h3>Welcome</h3>
+      <p class="sub">How will you use MedCheck?</p>
+      <div class="roles">
+        <button class="role pt on" data-r="patient"><span class="ri">💬</span><b>I'm a patient</b><small>Look up medicines and share your experience</small></button>
+        <button class="role co" data-r="company"><span class="ri">🏢</span><b>Drug company</b><small>Safety, medical affairs and brand teams</small></button>
+      </div>
+      <form id="lf-patient">
+        <div class="fld"><label for="pe">Email</label><input id="pe" type="email" placeholder="you@example.com" autocomplete="off"></div>
+        <button class="btn-main pt" type="submit">Continue</button>
+        <button class="alt" type="button" id="guest">Continue as guest →</button>
+      </form>
+      <form id="lf-company" hidden>
+        <div class="fld"><label for="cid">Company ID</label><input id="cid" placeholder="e.g. ACME-PV-0042" value="ACME-PV-0042" autocomplete="off"></div>
+        <div class="fld"><label for="cem">Work email</label><input id="cem" type="email" placeholder="name@company.com" value="safety@acmepharma.com" autocomplete="off"></div>
+        <div class="fld"><label for="cpw">Password</label><input id="cpw" type="password" placeholder="••••••••" autocomplete="off"></div>
+        <button class="btn-main co" type="submit">Sign in to company workspace</button>
+        <button class="alt" type="button" id="sso">Use company SSO →</button>
+      </form>
+      <p class="fine">Demo sign-in: nothing is checked or stored.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMPANY DASHBOARD -->
+<section class="view" id="v-co">
+  <div class="wrap">
+    <nav>
+      <div class="logo"><div class="logo-mark"><i></i></div>MedCheck <span style="font-weight:500;color:var(--ink3);font-size:14px;margin-left:4px">for Industry</span></div>
+      <div class="who"><span class="av" style="background:var(--off)">AP</span><span id="co-name">Acme Pharma · Drug Safety</span><button class="logout">Sign out</button></div>
+    </nav>
+    <div class="rhead" style="padding-top:10px">
+      <div><div class="meta">Patient voice · signal monitoring</div><h2>Portfolio signals</h2></div>
+    </div>
+    <div class="prods"><span class="prod on">Zoloft (sertraline)</span><span class="prod">Product B</span><span class="prod">Product C</span><span class="prod add">+ Add product</span></div>
+    <div class="kpis">
+      <div class="kpi"><small>Patient reviews analyzed</small><b>2,014</b><span>Drugs.com · Zoloft</span></div>
+      <div class="kpi"><small>FDA FAERS reports (top term)</small><b>7,582</b><span>nausea · openFDA</span></div>
+      <div class="kpi"><small>Label gaps flagged</small><b style="color:var(--ppl)">4</b><span>reported often, not on the main table</span></div>
+      <div class="kpi"><small>Flashpoint survey respondents</small><b style="color:var(--flash)">300</b><span>sample wave</span></div>
+    </div>
+    <div class="dash">
+      <div class="card">
+        <h5>Where patients and the label disagree</h5>
+        <table class="sig-t">
+          <thead><tr><th>Signal</th><th>Label</th><th>Patients</th><th>Users agree</th><th>Trend</th><th>Priority</th></tr></thead>
+          <tbody id="sig"></tbody>
+        </table>
+        <div class="compliance">🔒 <span>Signals are aggregated and de-identified. No individual patient data is shared with companies. Individual adverse event reports can be sent to your safety team's intake.</span></div>
+      </div>
+      <div class="col">
+        <div class="card" style="border-color:rgba(217,255,92,.28);background:linear-gradient(160deg,#1c2410,var(--surface) 60%)">
+          <h5 style="margin-bottom:8px">Commission a Flashpoint survey</h5>
+          <p class="note" style="margin:0 0 14px">Test a signal with real, paid respondents.</p>
+          <form id="svf">
+            <div class="fld"><label>Signal to test</label><select><option>Anxiety at start of treatment</option><option>Headaches</option><option>Weight gain</option><option>Feeling emotionally flat</option></select></div>
+            <div class="two-f"><div class="fld"><label>Respondents</label><select><option>300</option><option>500</option><option>1,000</option></select></div><div class="fld"><label>Region</label><select><option>United States</option><option>US + EU</option></select></div></div>
+            <button class="btn-main" style="background:var(--flash);color:var(--bg)" type="submit">Draft survey plan</button>
+          </form>
+        </div>
+        <div class="card">
+          <h5 style="font-size:22px;margin-bottom:10px">See what patients see</h5>
+          <p class="note" style="margin:0 0 12px">Open the public patient view for Zoloft.</p>
+          <button class="btn-main" style="background:var(--ink);color:var(--bg)" id="co-open">Open patient view →</button>
+        </div>
+      </div>
+    </div>
+    <footer><span>Label, FAERS and Drugs.com data are real. Trends and survey numbers are samples.</span><span>MedCheck for Industry · demo</span></footer>
+  </div>
+</section>
+
+<!-- REVIEW MODAL -->
+<div class="modal" id="rm" role="dialog" aria-label="Share your experience">
+  <div class="auth">
+    <button class="x" id="rmx" aria-label="Close">×</button>
+    <h3>Share your experience</h3>
+    <p class="sub">Your review helps the next person know what to expect. It's posted anonymously.</p>
+    <form id="rf">
+      <div class="two-f">
+        <div class="fld"><label>Medicine</label><input id="r-drug" value="Zoloft"></div>
+        <div class="fld"><label>Dose</label><select id="r-dose"><option>25 mg</option><option selected>50 mg</option><option>100 mg</option><option>150 mg+</option></select></div>
+      </div>
+      <div class="fld"><label>How long have you taken it?</label><select id="r-dur"><option>Less than 2 weeks</option><option selected>2–8 weeks</option><option>2–6 months</option><option>Over 6 months</option></select></div>
+      <div class="fld"><label>Side effects you noticed</label><div class="sx" id="r-sx"></div></div>
+      <div class="fld"><label>Overall</label><div class="stars" id="r-stars"></div></div>
+      <div class="fld"><label>Tell us more (optional)</label><textarea id="r-txt" placeholder="What changed, when it started, what helped…"></textarea></div>
+      <button class="btn-main pt" type="submit">Post review</button>
+      <p class="fine">Not medical advice. If something feels serious, contact your doctor. You can also report side effects to the FDA (MedWatch).</p>
+    </form>
+  </div>
+</div>
+
+<section class="view" id="v-home">
+  <div class="wrap">
+    <nav>
+      <div class="logo home-link"><div class="logo-mark"><i></i></div>MedCheck</div>
+      <div class="who"><span class="av" style="background:var(--ppl)" id="pt-av">G</span><span id="pt-name">Guest</span><button class="logout">Sign out</button></div>
+    </nav>
+    <div class="hero">
+      <h1><span>What the <span class="o">label says.</span></span><span>What <span class="p">patients share.</span></span></h1>
+      <p class="lede">See both sides of any medicine before your next appointment.</p>
+      <form class="search" id="f">
+        <button type="button" class="cam" id="cam" aria-label="Upload a photo of your medicine" title="Upload a photo of your pill bottle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        </button>
+        <input type="file" id="file" accept="image/*" hidden>
+        <div class="thumb" id="thumb"><img id="timg" alt=""><span id="tstat"></span></div>
+        <input type="text" id="q" value="Zoloft" autocomplete="off" aria-label="Medicine name" placeholder="Medicine name, or upload a photo">
+        <button class="go" type="submit">Check →</button>
+      </form>
+      <div class="chips">
+        <small>Try:</small>
+        <button class="chip hot" data-d="Zoloft">Zoloft</button>
+        <button class="chip" data-d="Lexapro">Lexapro</button>
+        <button class="chip" data-d="Wellbutrin">Wellbutrin</button>
+      </div>
+      <button class="share-btn open-review">✍️ Taken a medicine? <b>Share your experience</b></button>
+    </div>
+  </div>
+</section>
+
+<div class="overlay" id="ov" role="dialog" aria-label="Research in progress">
+  <div class="agent">
+    <div class="agent-l">
+      <div class="agent-h"><h3>Researching <em>Zoloft</em></h3><button class="skip" id="skip">Skip ›</button></div>
+      <ol class="steps" id="steps"></ol>
+    </div>
+    <div class="agent-r"><div class="lh">Agent trace</div><div class="log" id="log"></div></div>
+    <div class="prog"><i id="pr"></i></div>
+  </div>
+</div>
+
+<section class="view" id="v-res">
+  <div class="wrap">
+    <nav>
+      <div class="logo home-link"><div class="logo-mark"><i></i></div>MedCheck</div>
+      <form class="search mini" id="f2">
+        <button type="button" class="cam" id="cam2" aria-label="Upload a photo of your medicine"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
+        <input type="text" id="q2" value="Zoloft" autocomplete="off" aria-label="Search another medicine" placeholder="Search another medicine">
+        <button class="go" type="submit">Check</button>
+      </form>
+      <span class="fp-pill"><i></i>Surveys via Flashpoint</span>
+    </nav>
+    <div class="rhead">
+      <div><div class="meta" id="d-meta">Sertraline · SSRI · FDA approved 1991</div><h2 id="d-name">Zoloft</h2></div>
+      <div class="tabs">
+        <button class="tab on" data-p="compare">Compare</button>
+        <button class="tab" data-p="sources">Sources</button>
+        <button class="tab fp-t" data-p="survey">⚡ Flashpoint survey</button>
+      </div>
+    </div>
+
+    <div class="page on" id="p-compare">
+      <div class="hope" id="hope"><b>64%</b> of 2,014 reviewers on Drugs.com rated their experience positively.</div>
+      <div class="card">
+        <div class="split">
+          <h3 class="o">What the label says<small>% OF PATIENTS IN FDA TRIALS</small></h3><span></span>
+          <h3 class="p">What patients share<small id="p-src">% OF DRUGS.COM REVIEWS MENTIONING IT</small></h3>
+        </div>
+        <div id="fly"></div>
+        <p class="note">Trial rates and review mentions measure different things. Compare the pattern, not the exact numbers. Click a row to read those reviews.</p>
+        <div class="status" id="status"></div>
+      </div>
+      <div class="card agree">
+        <div class="ag-h"><h5>Did you feel this too?</h5><p>Tap to agree or disagree. Your vote shapes what the next person sees.</p></div>
+        <div class="ag-grid" id="ag"></div>
+        <p class="note">Community vote counts are sample numbers for the demo. Your votes count for this visit only.</p>
+      </div>
+      <div class="ins" id="ins">
+        <a class="in" href="https://www.drugs.com/comments/sertraline/zoloft-sfx-anxiety.html" target="_blank" rel="noopener"><span class="k">Biggest gap</span><h6>Anxiety comes up most</h6><p>14.7% of reviews mention it. The label lists agitation at 8%.</p><span class="lk">Read reviews ↗</span></a>
+        <a class="in" href="https://www.drugs.com/comments/sertraline/zoloft-sfx-headaches.html" target="_blank" rel="noopener"><span class="k">Not in the main table</span><h6>Headaches and weight gain</h6><p>Patients bring them up. The trials didn't show them above placebo.</p><span class="lk">Read reviews ↗</span></a>
+        <a class="in" href="https://www.reddit.com/r/zoloft/comments/1hzyb6h/moral_compass_out_of_whack_while_on_zoloft/" target="_blank" rel="noopener"><span class="k">Only on Reddit</span><h6>Feeling emotionally flat</h6><p>People on r/zoloft describe it. The label doesn't name it.</p><span class="lk">Open thread ↗</span></a>
+      </div>
+    </div>
+
+    <div class="page" id="p-sources">
+      <div class="two">
+        <div class="col">
+          <div class="col-h" style="color:var(--off)">What the label says</div>
+          <a class="src" id="dm-link" href="https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=fda754f6-d0f3-4dce-a17a-927d64f912f7" target="_blank" rel="noopener">
+            <div class="top"><span class="nm">DailyMed — Zoloft Prescribing Information</span><span class="ar">↗</span></div>
+            <p>The full FDA label. Rates come from pooled trials vs. placebo.</p>
+            <div class="facts"><div><b>26%</b><small>nausea</small></div><div><b>20%</b><small>insomnia</small></div><div><b>20%</b><small>diarrhea</small></div></div>
+          </a>
+          <a class="src" href="https://medlineplus.gov/druginfo/meds/a697048.html" target="_blank" rel="noopener"><div class="top"><span class="nm">MedlinePlus — Sertraline Drug Information</span><span class="ar">↗</span></div><p>The plain-language guide from the National Library of Medicine.</p></a>
+          <a class="src" href="https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=019839" target="_blank" rel="noopener"><div class="top"><span class="nm">Drugs@FDA — Zoloft Approval Record</span><span class="ar">↗</span></div><p>NDA 019839 · approved Dec 1991 · every label update since.</p></a>
+          <a class="src" href="https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ZOLOFT%22" target="_blank" rel="noopener"><div class="top"><span class="nm">openFDA — Drug Label API</span><span class="tag">API</span></div><p>The label in machine-readable form. This is what our agent reads.</p></a>
+          <a class="src" href="https://api.fda.gov/drug/event.json?search=patient.drug.openfda.brand_name:%22ZOLOFT%22&count=patient.reaction.reactionmeddrapt.exact&limit=15" target="_blank" rel="noopener">
+            <div class="top"><span class="nm">FDA FAERS — Adverse Event Reports</span><span class="tag">API</span></div>
+            <p>Reports filed after approval (raw counts, unvalidated):</p>
+            <div class="faers" id="faers"></div>
+          </a>
+        </div>
+        <div class="col">
+          <div class="col-h" style="color:var(--ppl)">What patients share</div>
+          <div class="src" id="dc-card">
+            <a class="top" href="https://www.drugs.com/comments/sertraline/zoloft.html" target="_blank" rel="noopener"><span class="nm">Drugs.com — Zoloft User Reviews</span><span class="ar">↗</span></a>
+            <p>Grouped by condition, with a page for each side effect.</p>
+            <div class="facts"><div><b>7.3</b><small>out of 10</small></div><div><b>2,014</b><small>reviews</small></div><div><b>64%</b><small>positive</small></div></div>
+            <div class="sfx" id="sfx"></div>
+          </div>
+          <div id="mine" class="col"></div>
+          <button class="share-btn open-review" style="margin:0;width:100%;justify-content:center">✍️ <b>Add your own review</b></button>
+          <div id="reddit" class="col"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="p-survey">
+      <div class="fp-top">
+        <div><h3>Asking <em>real people</em> with Flashpoint</h3><p>Paid respondents who've taken Zoloft, asked directly.</p></div>
+        <span class="sample">SAMPLE RESULTS</span>
+      </div>
+      <div class="two">
+        <div class="card">
+          <h5>Survey plan</h5>
+          <div class="flow"><span>Research</span><span>Plan</span><span>Approve</span><span>Field</span><span>Results</span></div>
+          <dl class="plan">
+            <div><dt>Respondents</dt><dd>300 paid, real US respondents</dd></div>
+            <div><dt>Screener</dt><dd id="sv-screener">“Have you taken Zoloft or sertraline in the past 12 months?”</dd></div>
+            <div><dt>Quota</dt><dd>50/50 split, ages 18–34 and 35–55</dd></div>
+            <div><dt>Length</dt><dd>10 questions in 3 blocks · about 5 minutes</dd></div>
+            <div><dt>Blocks</dt><dd>What you felt · What you were told · How it changed over time</dd></div>
+          </dl>
+        </div>
+        <div class="card">
+          <h5>What they told us</h5>
+          <div class="big2"><div><b>58%</b><small>had a side effect nobody mentioned to them</small></div><div><b>66%</b><small>said early side effects eased within a month</small></div></div>
+          <div class="legend"><span><i style="background:#5b6072"></i>Was told about it</span><span><i style="background:var(--flash)"></i>Experienced it</span></div>
+          <div class="tve" id="tve"></div>
+        </div>
+      </div>
+      <p class="note">Sample results for the demo. Prescriptions are self-reported in the screener.</p>
+    </div>
+
+    <footer>
+      <span>MedCheck shows what's documented and what people report. Talk with your doctor before changing any medicine. Crisis support (US): call or text 988.</span>
+      <span>Label, FAERS and Drugs.com data are real. Survey numbers are samples.</span>
+    </footer>
+  </div>
+</section>
+
+<div class="tip" id="tip"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2800)};
+
+/* REAL: FDA label Table 3 (Zoloft N=3066 / placebo N=2293) and Drugs.com % of 2,014 reviews */
+let FLY=[
+  {n:'Anxiety',s:'label: agitation',o:8,pl:5,p:14.7,g:1,u:'anxiety'},
+  {n:'Nausea',o:26,pl:12,p:11.4,u:'nausea'},
+  {n:'Insomnia',o:20,pl:13,p:9.6,u:'insomnia'},
+  {n:'Sexual side effects',s:'label: lower libido',o:6,pl:2,p:8.0,g:1,u:'sexual-dysfunction'},
+  {n:'Tiredness',o:12,pl:8,p:7.1,u:'tiredness'},
+  {n:'Loss of appetite',o:7,pl:2,p:6.5,u:'loss-of-appetite'},
+  {n:'Headaches',o:null,p:6.3,g:1,u:'headaches'},
+  {n:'Weight gain',o:null,p:5.6,g:1,u:'weight-gain'},
+  {n:'Diarrhea',o:20,pl:10,p:5.2,u:'diarrhea'},
+];
+let FAERS=[['Nausea',7582],['Fatigue',7147],['Headache',6381],['Anxiety',5948],['Diarrhoea',5228],['Dizziness',5121]];
+const SFX=[['Anxiety','anxiety'],['Nausea','nausea'],['Insomnia','insomnia'],['Sexual','sexual-dysfunction'],['Tiredness','tiredness'],['Headaches','headaches'],['Weight gain','weight-gain']];
+let REDDIT=[
+  {t:'Moral compass out of whack while on Zoloft',d:'Jan 2025',th:'Feeling flat',s:'Replies describe feeling numb and caring less.',u:'https://www.reddit.com/r/zoloft/comments/1hzyb6h/moral_compass_out_of_whack_while_on_zoloft/'},
+  {t:'Side effects after two weeks?',d:'2025',th:'Early weeks',s:'New starters compare shakiness and jitters in the first days.',u:'https://www.reddit.com/r/zoloft/comments/1ilm0tv/side_effects_after_two_weeks/'},
+  {t:'FAQs etc! (mod post)',d:'Aug 2021',th:'Night sweats',s:'People realize night sweats are common once they find the sub.',u:'https://www.reddit.com/r/zoloft/comments/p21bem/faqs_etc/'},
+  {t:'This sub isn’t an entirely accurate picture of Zoloft',d:'Dec 2022 · 1.3k upvotes',th:'It got better',s:'People who feel better stop posting, so the sub skews negative.',u:'https://www.reddit.com/r/zoloft/comments/zosxxr/this_sub_isnt_an_entirely_accurate_picture_of/'},
+  {t:'Hang in there. It works.',d:'Oct 2024',th:'It got better',s:'Rough first weeks, then lasting relief.',u:'https://www.reddit.com/r/zoloft/comments/1fycsk4/hang_in_there_it_works/'},
+];
+/* SAMPLE (Flashpoint survey) */
+let TVE=[['Nausea',61,47],['Trouble sleeping',38,36],['Anxiety at first',17,41],['Sexual side effects',22,34],['Feeling flat',5,24]];
+
+function show(v){$$('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));scrollTo(0,0)}
+function page(p){$$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.p===p));$$('.page').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));animate(p)}
+$$('.tab').forEach(t=>t.onclick=()=>page(t.dataset.p));
+$$('.home-link').forEach(l=>l.onclick=()=>show('home'));
+
+let pending=null,query='Zoloft';
+function start(d){query=(d||'Zoloft').trim()||'Zoloft';$('#q2').value=query;$('.agent-h h3 em').textContent=query;pending=fetchResearch(query);run()}
+$('#f').addEventListener('submit',e=>{e.preventDefault();start($('#q').value)});
+$('#f2').addEventListener('submit',e=>{e.preventDefault();$('#q').value=$('#q2').value;start($('#q2').value)});
+$$('.chip').forEach(c=>c.onclick=()=>{$('#q').value=c.dataset.d;start(c.dataset.d)});
+$('#cam').onclick=()=>$('#file').click();
+$('#cam2').onclick=()=>{show('home');$('#file').click()};
+function handleImage(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  $('#timg').src=URL.createObjectURL(file);$('#thumb').classList.add('on');$('#tstat').innerHTML='<span class="spin"></span>';
+  $('#q').value='';$('#q').placeholder='Reading the label…';
+  setTimeout(()=>{$('#tstat').innerHTML='<b>Zoloft 50 mg</b>';$('#q').value='Zoloft';toast('Found: Zoloft (sertraline) 50 mg');setTimeout(()=>start('Zoloft'),900)},1500);
+}
+$('#file').onchange=e=>handleImage(e.target.files[0]);
+['dragover','drop'].forEach(ev=>$('#f').addEventListener(ev,e=>{e.preventDefault();if(ev==='drop')handleImage(e.dataTransfer.files[0])}));
+
+const STEPS=[
+  {t:'Reading the FDA label',s:'DailyMed · openFDA',n:'21',d:1000,c:'o'},
+  {t:'Checking FDA safety reports',s:'FAERS',n:'7,582',d:1000,c:'o'},
+  {t:'Checking actual surveys using Flashpoint…',s:'Paid respondents who\'ve taken Zoloft',n:'300',d:2300,fp:1},
+  {t:'Reading patient reviews',s:'Drugs.com',n:'2,014',d:1100,c:'p'},
+  {t:'Reading r/zoloft',s:'Reddit threads on side effects',n:'5',d:1000,c:'p'},
+  {t:'Putting both sides together',s:'Matching symptoms across sources',n:'9',d:900},
+];
+const LOGS=[['c','resolve("Zoloft") → sertraline'],['c','dailymed.label(setid="fda754f6…")'],['o','→ Table 3 · 21 reactions'],['c','openfda.event.count(reaction)'],['o','→ top: nausea 7,582'],['f','flashpoint.survey(topic="sertraline side effects")'],['f','  screener: taken sertraline in 12 mo'],['f','… 186 / 300 responses'],['o','→ 300 responses'],['p','drugscom.reviews("zoloft")'],['o','→ 2,014 reviews · 7.3/10'],['p','reddit.search(r/zoloft, "side effect")'],['o','→ threads ranked'],['c','align label ↔ patients'],['o','✓ 3 gaps found']];
+let timers=[],running=false;
+function run(){
+  running=true;$('#ov').classList.add('on');const ul=$('#steps');ul.innerHTML='';$('#log').innerHTML='';$('#pr').style.width=0;
+  STEPS.forEach(s=>{const li=document.createElement('li');li.className='step'+(s.fp?' fp':'')+(s.c?' side-'+s.c:'');li.innerHTML=`<span class="ic"></span><div><div class="t">${s.t}</div><div class="s">${s.s}</div></div><span class="n">—</span>`;ul.appendChild(li)});
+  const items=[...ul.children],total=STEPS.reduce((a,s)=>a+s.d,0);let t=0;
+  LOGS.forEach((l,i)=>timers.push(setTimeout(()=>{const d=document.createElement('div');d.className=l[0];d.textContent=(l[0]==='o'?'':'› ')+l[1];$('#log').appendChild(d)},i/LOGS.length*total)));
+  STEPS.forEach((s,i)=>{timers.push(setTimeout(()=>{items[i].classList.add('active');count(items[i].querySelector('.n'),s.n,s.d*.85)},t));t+=s.d;timers.push(setTimeout(()=>{items[i].classList.replace('active','done');$('#pr').style.width=(i+1)/STEPS.length*100+'%'},t))});
+  timers.push(setTimeout(finish,t+400));
+}
+function count(el,target,dur){const n=parseInt(target.replace(/,/g,''));const t0=performance.now();(function f(now){const p=Math.min(1,(now-t0)/dur);el.textContent=Math.round(n*(1-Math.pow(1-p,3))).toLocaleString();if(p<1)requestAnimationFrame(f)})(t0)}
+async function finish(){timers.forEach(clearTimeout);timers=[];if(!running)return;running=false;
+  const d=await Promise.race([pending,new Promise(r=>setTimeout(()=>r(null),6000))]);
+  if(d&&d.comparison&&d.comparison.rows.length)applyLive(d);
+  else{applyFallback();if(!/zoloft|sertraline/i.test(query))toast('Live data unavailable here. Showing the Zoloft sample.')}
+  $('#ov').classList.remove('on');show('res');page('compare')}
+$('#skip').onclick=finish;
+
+const MAX=28;
+function build(){
+  $('#fly').innerHTML=FLY.map((r,i)=>`<a class="frow" data-i="${i}" href="${r.href||(r.u?`https://www.drugs.com/comments/sertraline/zoloft-sfx-${r.u}.html`:'#')}" target="_blank" rel="noopener">
+    <div class="side l">${r.o==null?'<span class="ghost">not above placebo</span>':`<span class="bar" data-w="${r.o/MAX*100}"></span><span class="v">${r.o}%</span>`}</div>
+    <div class="lab">${r.n}${r.g?'<b>GAP</b>':''}${r.s?`<small>${r.s}</small>`:''}</div>
+    <div class="side r">${r.p==null?'<span class="ghost" style="margin-left:6px">no patient data yet</span>':`<span class="bar" data-w="${r.p/MAX*100}"></span><span class="v">${r.p}%</span>`}</div></a>`).join('');
+  const tip=$('#tip');
+  $$('.frow').forEach(el=>{
+    el.addEventListener('mousemove',e=>{const r=FLY[el.dataset.i];tip.innerHTML=`<b>${r.n}</b>Label: ${r.o==null?'not 2%+ above placebo in trials':`${r.o}% on Zoloft vs ${r.pl}% on placebo`}<br>Patients: ${r.p==null?'no data yet':r.p+'% of reports'}`;tip.style.opacity=1;tip.style.left=Math.min(e.clientX+14,innerWidth-300)+'px';tip.style.top=e.clientY+14+'px'});
+    el.addEventListener('mouseleave',()=>tip.style.opacity=0);
+  });
+  const fm=FAERS[0][1];
+  $('#faers').innerHTML=FAERS.map(([n,c])=>`<div><span>${n}</span><i style="width:${c/fm*100}%"></i><span>${c.toLocaleString()}</span></div>`).join('');
+  $('#sfx').innerHTML=SFX.map(([n,u])=>`<a href="https://www.drugs.com/comments/sertraline/zoloft-sfx-${u}.html" target="_blank" rel="noopener">${n}</a>`).join('');
+  $('#reddit').innerHTML=REDDIT.map(r=>`<a class="rd" href="${r.u}" target="_blank" rel="noopener"><div class="rh"><i>r/</i>r/zoloft · ${r.d}<span class="th">${r.th}</span></div><h6>${r.t}</h6><p>${r.s}</p><span class="open">Open on Reddit ↗</span></a>`).join('');
+  $('#tve').innerHTML=TVE.map(([n,t,x])=>`<div class="tr"><div class="nm">${n}</div><div><div class="b told"><i data-w="${t}"></i><span>${t}%</span></div><div class="b exp"><i data-w="${x}"></i><span>${x}%</span></div></div></div>`).join('');
+}
+function animate(p){const sel={compare:'#fly .bar',survey:'#tve i'}[p];if(!sel)return;$$(sel).forEach(b=>b.style.width=0);requestAnimationFrame(()=>setTimeout(()=>$$(sel).forEach((b,i)=>setTimeout(()=>b.style.width=b.dataset.w+'%',i*45)),30))}
+build();
+history.replaceState(null,'',location.pathname+location.search);
+
+/* ===== live data from /api/research (falls back to the built-in Zoloft data) ===== */
+const FB={FLY:[...FLY],FAERS:[...FAERS],REDDIT:[...REDDIT],TVE:[...TVE],ins:$('#ins').innerHTML,meta:$('#d-meta').textContent,name:$('#d-name').textContent,psrc:$('#p-src').textContent,scr:$('#sv-screener').textContent};
+const esc2=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const title=s=>String(s||'').toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());
+async function fetchResearch(drug){
+  try{const r=await fetch('/api/research?drug='+encodeURIComponent(drug),{headers:{accept:'application/json'}});if(!r.ok)return null;return await r.json()}catch(e){return null}
+}
+function setStatus(src){
+  const names={label:'FDA label',faers:'FAERS',reviews:'Reviews',reddit:'Reddit',flashpoint:'Flashpoint',insights:'Insights'};
+  $('#status').innerHTML=Object.entries(src).map(([k,v])=>`<span class="${v==='live'||v==='claude'?'live':v==='curated'?'curated':''}">${names[k]||k}: ${esc2(v)}</span>`).join('');
+}
+function applyLive(d){
+  const c=d.comparison;
+  FLY=c.rows.map(r=>({n:r.name,s:r.labelTerm?'label: '+r.labelTerm.toLowerCase():'',o:r.labelPct,pl:r.placeboPct,p:r.patientPct,g:r.gap?1:0,href:r.href||d.drug.dailymedUrl||'#'}));
+  FAERS=(d.faers?.top||[]).slice(0,6).map(x=>[title(x.term),x.count]);
+  const posts=d.reddit?.posts||[];
+  REDDIT=posts.map(p=>({t:p.title,d:(p.created||'').slice(0,7)+(p.score!=null?` · ${p.score} upvotes`:''),th:p.theme||(p.symptoms&&p.symptoms[0])||p.subreddit||'',s:p.summary||(p.comments!=null?`${p.comments} comments on ${p.subreddit}`:''),u:p.url}));
+  if(d.survey?.results?.toldVsExperienced)TVE=d.survey.results.toldVsExperienced.map(x=>[x.name,x.told,x.experienced]);
+  const brand=title(d.drug.brand);
+  $('#d-name').textContent=brand;
+  $('#d-meta').textContent=[title(d.drug.generic),(d.drug.pharmClass||'').replace(/\s*\[EPC\]/,''),d.drug.labelUpdated?'Label updated '+d.drug.labelUpdated.slice(0,4):''].filter(Boolean).join(' · ');
+  $('#p-src').textContent=c.patientSource?`% OF ${c.patientSource.toUpperCase()} ${c.patientSource==='Reddit'?'POSTS':'REVIEWS'} MENTIONING IT`:'NO PATIENT DATA YET';
+  if(d.reviews){$('#hope').style.display='';$('#hope').innerHTML=`<b>${d.reviews.positivePct}%</b> of ${Number(d.reviews.count).toLocaleString()} reviewers on ${esc2(d.reviews.source)} rated their experience positively.`;$('#dc-card').style.display=''}
+  else{$('#hope').style.display='none';$('#dc-card').style.display='none'}
+  if(d.drug.dailymedUrl)$('#dm-link').href=d.drug.dailymedUrl;
+  if(d.survey?.plan)$('#sv-screener').textContent=`“${d.survey.plan.screener}”`;
+  $('#ins').innerHTML=(d.insights||[]).map(i=>`<${i.href?'a':'div'} class="in" ${i.href?`href="${esc2(i.href)}" target="_blank" rel="noopener"`:''}><span class="k">${esc2(i.kicker)}</span><h6>${esc2(i.title)}</h6><p>${esc2(i.body)}</p>${i.href?'<span class="lk">Read reviews ↗</span>':''}</${i.href?'a':'div'}>`).join('');
+  const seed=t=>[...t].reduce((a,c)=>a+c.charCodeAt(0),0);
+  AGV=c.rows.slice(0,8).map(r=>{const h=seed(r.name+d.drug.brand);return {k:'lv-'+r.key,n:r.name,s:r.labelPct==null?'Not above placebo in trials':`Label ${r.labelPct}%`+(r.patientPct!=null?` · patients ${r.patientPct}%`:''),y:150+h%260,no:120+(h*7)%200}});
+  setStatus(d.sources||{});
+  build();renderAg();
+}
+function applyFallback(){
+  FLY=[...FB.FLY];FAERS=[...FB.FAERS];REDDIT=[...FB.REDDIT];TVE=[...FB.TVE];
+  $('#ins').innerHTML=FB.ins;$('#d-meta').textContent=FB.meta;$('#d-name').textContent=FB.name;$('#p-src').textContent=FB.psrc;$('#sv-screener').textContent=FB.scr;
+  $('#hope').style.display='';$('#dc-card').style.display='';
+  AGV=AG;
+  setStatus({label:'built-in',faers:'built-in',reviews:'curated',reddit:'sample',flashpoint:'sample'});
+  build();renderAg();
+}
+setStatus({label:'built-in',faers:'built-in',reviews:'curated',reddit:'sample',flashpoint:'sample'});
+
+/* ===== login / roles (demo only, nothing stored) ===== */
+let role='patient';
+$$('.role').forEach(b=>b.onclick=()=>{role=b.dataset.r;$$('.role').forEach(x=>x.classList.toggle('on',x===b));$('#lf-patient').hidden=role!=='patient';$('#lf-company').hidden=role!=='company'});
+function enterPatient(name){const n=name||'Guest';$('#pt-name').textContent=n;$('#pt-av').textContent=n[0].toUpperCase();show('home')}
+$('#lf-patient').addEventListener('submit',e=>{e.preventDefault();const em=$('#pe').value.trim();enterPatient(em?em.split('@')[0]:'Guest')});
+$('#guest').onclick=()=>enterPatient('Guest');
+function enterCompany(){const id=($('#cid').value.trim()||'ACME-PV-0042').toUpperCase();$('#co-name').textContent=`Acme Pharma · ${id}`;show('co');animateSig()}
+$('#lf-company').addEventListener('submit',e=>{e.preventDefault();enterCompany()});
+$('#sso').onclick=enterCompany;
+$$('.logout').forEach(b=>b.onclick=()=>show('login'));
+$$('.home-link').forEach(l=>l.onclick=()=>show($('#v-co').classList.contains('on')?'co':'home'));
+$('#co-open').onclick=()=>{show('res');page('compare')};
+$('#svf').addEventListener('submit',e=>{e.preventDefault();toast('Survey plan drafted. Review it in Flashpoint before fielding.')});
+
+/* company signals: label/patient values real; trend & priority sample */
+const SIG=[
+  {n:'Anxiety at start',o:'8% (agitation)',p:'14.7%',t:[6,7,7,9,10,12,14.7],lv:['hi','HIGH']},
+  {n:'Headaches',o:'—',p:'6.3%',t:[5,5.5,5.2,6,5.8,6.1,6.3],lv:['md','MEDIUM']},
+  {n:'Weight gain',o:'—',p:'5.6%',t:[3,3.6,4.1,4.4,5,5.2,5.6],lv:['md','MEDIUM']},
+  {n:'Feeling emotionally flat',o:'not named',p:'Reddit theme',t:[2,2,3,3,4,4,5],lv:['lo','WATCH']},
+];
+function spark(a){const mx=Math.max(...a),mn=Math.min(...a);const pts=a.map((v,i)=>`${i*(80/(a.length-1))},${22-((v-mn)/(mx-mn||1))*18}`).join(' ');return `<svg class="spark" viewBox="0 0 80 24"><polyline points="${pts}" fill="none" stroke="#e85c33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`}
+/* agreement votes (seed counts are samples) */
+const AG=[
+  {k:'anx',n:'Anxiety at first',s:'Biggest gap vs. label',y:412,no:198},
+  {k:'nau',n:'Nausea',s:'Label 26% · reviews 11.4%',y:356,no:251},
+  {k:'ins',n:'Insomnia',s:'Label 20% · reviews 9.6%',y:298,no:240},
+  {k:'sex',n:'Sexual side effects',s:'Label 6% · reviews 8%',y:287,no:176},
+  {k:'hea',n:'Headaches',s:'Not above placebo in trials',y:203,no:219},
+  {k:'wei',n:'Weight gain',s:'Not above placebo in trials',y:181,no:236},
+  {k:'fla',n:'Feeling emotionally flat',s:'Only on Reddit',y:244,no:161},
+  {k:'swe',n:'Night sweats',s:'Label: 7% sweating',y:167,no:205},
+];
+const myVote={};
+let AGV=AG;
+const pct=a=>{const y=a.y+(myVote[a.k]==='y'?1:0),n=a.no+(myVote[a.k]==='n'?1:0);return {y,n,p:Math.round(y/(y+n)*100)}};
+function renderAg(){
+  $('#ag').innerHTML=AGV.map(a=>{const r=pct(a);return `<div class="ag" data-k="${a.k}">
+    <div class="nm">${a.n}<small>${a.s}</small></div>
+    <div class="vb"><button class="yes${myVote[a.k]==='y'?' on':''}" data-v="y">🙋 Me too</button><button class="no${myVote[a.k]==='n'?' on':''}" data-v="n">Not for me</button></div>
+    <div class="meter"><div class="track"><i style="width:${r.p}%"></i></div><span><b>${r.p}%</b> agree · ${(r.y+r.n).toLocaleString()} votes</span></div></div>`}).join('');
+  $$('#ag .vb button').forEach(b=>b.onclick=()=>{const k=b.closest('.ag').dataset.k,v=b.dataset.v;myVote[k]=myVote[k]===v?undefined:v;renderAg();renderSig();if(myVote[k])toast(v==='y'?'Thanks, counted as “Me too”.':'Thanks, counted as “Not for me”.')});
+}
+const SIGAG={'Anxiety at start':'anx','Headaches':'hea','Weight gain':'wei','Feeling emotionally flat':'fla'};
+function renderSig(){
+  $('#sig').innerHTML=SIG.map(s=>{const a=AG.find(x=>x.k===SIGAG[s.n]);const r=pct(a);return `<tr><td><b style="font-weight:600">${s.n}</b></td><td class="num o">${s.o}</td><td class="num p">${s.p}</td><td class="agv">${r.p}% <span style="color:var(--ink3);font-size:11px">of ${(r.y+r.n)}</span></td><td>${spark(s.t)}</td><td><span class="lvl ${s.lv[0]}">${s.lv[1]}</span></td></tr>`}).join('');
+}
+renderAg();renderSig();
+function animateSig(){renderSig()}
+
+/* patient reviews (kept in memory for this visit) */
+const SXL=['Nausea','Insomnia','Anxiety','Tiredness','Headaches','Sexual side effects','Night sweats','Feeling flat','None'];
+$('#r-sx').innerHTML=SXL.map(s=>`<button type="button">${s}</button>`).join('');
+$$('#r-sx button').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
+let stars=4;$('#r-stars').innerHTML=[1,2,3,4,5].map(i=>`<button type="button" data-s="${i}">★</button>`).join('');
+const paint=()=>$$('#r-stars button').forEach(b=>b.classList.toggle('on',+b.dataset.s<=stars));paint();
+$$('#r-stars button').forEach(b=>b.onclick=()=>{stars=+b.dataset.s;paint()});
+$$('.open-review').forEach(b=>b.onclick=()=>$('#rm').classList.add('on'));
+$('#rmx').onclick=()=>$('#rm').classList.remove('on');
+$('#rm').addEventListener('click',e=>{if(e.target.id==='rm')$('#rm').classList.remove('on')});
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+$('#rf').addEventListener('submit',e=>{
+  e.preventDefault();
+  const sx=$$('#r-sx button.on').map(b=>b.textContent);const txt=$('#r-txt').value.trim();
+  const card=document.createElement('div');card.className='rd mine';
+  card.innerHTML=`<div class="rh"><i>✓</i>Your review · just now<span class="th">${'★'.repeat(stars)}</span></div><h6>${esc($('#r-drug').value||'Zoloft')} · ${esc($('#r-dose').value)} · ${esc($('#r-dur').value)}</h6><p>${sx.length?esc(sx.join(', ')):'No side effects selected'}${txt?' · '+esc(txt):''}</p>`;
+  $('#mine').prepend(card);
+  $('#rm').classList.remove('on');$('#rf').reset();$$('#r-sx button').forEach(b=>b.classList.remove('on'));stars=4;paint();
+  toast('Thanks! Your review is added to “What patients share”.');
+});
+</script>
+</body>
+</html>
